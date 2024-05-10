@@ -9,12 +9,12 @@ import 'package:views_front/pages/login_page.dart';
 import 'package:views_front/pages/secondlogin_page.dart';
 import 'package:views_front/pages/deals_page.dart';
 
-class HomePage extends StatefulWidget {
+class SecondHomePage extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _SecondHomePageState createState() => _SecondHomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _SecondHomePageState extends State<SecondHomePage> {
   String? _accessToken;
   String _username = "Usuario";
   String _longSessionToken = "";
@@ -233,7 +233,7 @@ class _HomePageState extends State<HomePage> {
                   _showFingerprintModal(context);
                 },
                 style: AppStyles.greenButtonStyle,
-                child: Text('Habilitar huella',
+                child: Text('Deshabilitar huella',
                     style: AppStyles.labelTextStyle),
               ),
               SizedBox(height: 20),
