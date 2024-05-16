@@ -6,7 +6,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:views_front/constants/constants.dart';
 import 'package:views_front/pages/articles_page.dart';
 import 'package:views_front/pages/login_page.dart';
-import 'package:views_front/pages/secondlogin_page.dart';
 import 'package:views_front/pages/deals_page.dart';
 
 class SecondHomePage extends StatefulWidget {
@@ -39,8 +38,36 @@ class _SecondHomePageState extends State<SecondHomePage> {
   }
 
   Future<void> _logout() async {
+    // Muestra un diálogo de confirmación antes de deshabilitar la huella digital
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Seguro que desea eliminar la huella?'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+                _removeFingerprint(); // Elimina la huella digital
+              },
+              child: Text('Sí'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Cierra el diálogo
+              },
+              child: Text('No'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _removeFingerprint() async {
     final prefs = await SharedPreferences.getInstance();
-    prefs.remove('accessToken');
+    await prefs.remove('accessToken');
+    await _storage.delete(key: 'longSessionToken');
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginPage()),
@@ -110,89 +137,12 @@ class _SecondHomePageState extends State<SecondHomePage> {
   }
 
   void _showFingerprintModal(BuildContext context) {
-    TextEditingController usernameController = TextEditingController();
-    TextEditingController passwordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Habilitar huella digital'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: usernameController,
-                decoration: InputDecoration(labelText: 'Usuario'),
-              ),
-              SizedBox(height: 20),
-              TextFormField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: InputDecoration(labelText: 'Contraseña'),
-              ),
-            ],
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                await _enableFingerprint(
-                    usernameController.text, passwordController.text);
-              },
-              child: Text('Aceptar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text('Cancelar'),
-            ),
-          ],
-        );
-      },
-    );
+    // ...
   }
 
   Future<void> _enableFingerprint(
       String username, String password) async {
-    try {
-      final response = await http.post(
-        Uri.parse('http://127.0.0.1:8000/fingerprint-create/'),
-        body: jsonEncode({
-          'username': username,
-          'password': password,
-          'access_token': _accessToken,
-        }),
-        headers: {'Content-Type': 'application/json'},
-      );
-      if (response.statusCode == 200) {
-        final dynamic responseData = json.decode(response.body);
-        final String longSessionToken = responseData['long_session_token'];
-        setState(() {
-          _longSessionToken = longSessionToken;
-        });
-        await _saveLongSessionToken();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Huella activada'),
-          ),
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SecondLoginPage(
-              username: username,
-              longSessionToken: longSessionToken,
-            ),
-          ),
-        );
-      } else {
-        throw Exception('Error al activar la huella digital');
-      }
-    } catch (error) {
-      print('Error: $error');
-    }
+    // ...
   }
 
   @override
@@ -224,31 +174,31 @@ class _SecondHomePageState extends State<SecondHomePage> {
               ElevatedButton(
                 onPressed: _getArticles,
                 style: AppStyles.greenButtonStyle,
-                child:
-                    Text('Ver Artículos', style: AppStyles.labelTextStyle),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  _showFingerprintModal(context);
-                },
-                style: AppStyles.greenButtonStyle,
-                child: Text('Deshabilitar huella',
-                    style: AppStyles.labelTextStyle),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _getOffers,
-                style: AppStyles.greenButtonStyle,
-                child:
-                    Text('Ver Ofertas', style: AppStyles.labelTextStyle),
+                child: Text('Ver Artículos', style: AppStyles.labelTextStyle),
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _logout,
                 style: AppStyles.greenButtonStyle,
-                child:
-                    Text('Cerrar Sesión', style: AppStyles.labelTextStyle),
+                child: Text(
+                  'Deshabilitar huella',
+                  style: AppStyles.labelTextStyle,
+                ),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _getOffers,
+                style: AppStyles.greenButtonStyle,
+                child: Text('Ver Ofertas', style: AppStyles.labelTextStyle),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _logout,
+                style: AppStyles.greenButtonStyle,
+                child: Text(
+                  'Cerrar Sesión',
+                  style: AppStyles.labelTextStyle,
+                ),
               ),
             ],
           ),

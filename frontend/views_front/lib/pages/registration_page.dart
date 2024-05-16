@@ -15,7 +15,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _registerUser() async {
-    final Uri registerUrl = Uri.parse('http://127.0.0.1:8000/register/');
+    final Uri registerUrl = Uri.parse('http://192.168.1.87:3000/register');
     final Map<String, String> requestBody = {
       'username': _usernameController.text,
       'password': _passwordController.text,

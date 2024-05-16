@@ -50,7 +50,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getArticles() async {
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/get-articles/'),
+        Uri.parse('http://192.168.1.87:3000/get-articles'),
         headers: {
           'Authorization': 'Bearer $_accessToken',
         },
@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _getOffers() async {
     try {
       final response = await http.get(
-        Uri.parse('http://127.0.0.1:8000/get-offers/'),
+        Uri.parse('http://192.168.1.87:3000/get-articles'),
         headers: {
           'Authorization': 'Bearer $_accessToken',
         },

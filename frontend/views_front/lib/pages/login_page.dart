@@ -15,7 +15,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _loginUser() async {
-    final Uri loginUrl = Uri.parse('http://127.0.0.1:8000/login/');
+    final Uri loginUrl = Uri.parse('http://192.168.1.87:3000/login');
     final Map<String, String> requestBody = {
       'username': _usernameController.text,
       'password': _passwordController.text,
