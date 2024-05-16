@@ -1,23 +1,18 @@
-#vies.py
-import os
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 from django.contrib.auth.models import User
-from .models import UserToken
-from .serializers import UserSerializer, SessionTokenSerializer
-from datetime import timedelta, timezone
+from .serializers import UserSerializer
+from datetime import timedelta
 from django.utils.timezone import timedelta
-from django.contrib.auth import logout
 import requests
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import permission_classes
 from rest_framework.permissions import IsAuthenticated
 
-#API REGISTRO
 @api_view(['POST'])
 def register(request):
     serializer = UserSerializer(data=request.data)
@@ -28,7 +23,6 @@ def register(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-#API LOGIN
 @api_view(['POST'])
 def login(request):
     username = request.data.get('username')
@@ -52,7 +46,6 @@ def login(request):
         "refresh_token": str(refresh_token),
     }, status=status.HTTP_200_OK)
 
-# API CREAR HUELLA
 @api_view(['POST'])
 def fingerprint_create(request):
     username = request.data.get('username')
@@ -87,7 +80,6 @@ def fingerprint_create(request):
     # Si todo es válido, devolver éxito con el token de sesión de larga duración
     return Response({"message": "Token de inicio de sesión generado.", "long_session_token": str(long_session_token)}, status=status.HTTP_200_OK)
 
-#API LOGIN CON HUELLA
 @api_view(['POST'])
 def fingerprint_login(request):
     username = request.data.get('username')
@@ -116,35 +108,8 @@ def fingerprint_login(request):
     short_session_token.set_exp(lifetime=timedelta(minutes=5))  # Duración del token de sesión corto de 5 minutos
 
     # Si todo es válido, devolver éxito con el token de sesión corto
-    return Response({"message": "Inicio de sesión exitoso utilizando huella digital.", "session_token": str(short_session_token)}, status=status.HTTP_200_OK)
+    return Response({"message": "Inicio de sesión exitoso utilizando huella digital.", "access_token": str(short_session_token)}, status=status.HTTP_200_OK)
 
-#API BORRAR HUELLA
-@api_view(['POST'])
-def fingerprint_delete(request):
-    short_session_token = request.data.get('session_token')
-
-    if not short_session_token:
-        return Response({"error": "Por favor, proporciona el token de sesión corto."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Verificar si el token de sesión corto es válido
-    try:
-        access_token = AccessToken(short_session_token)
-    except Exception as e:
-        return Response({"error": "Token de sesión corto inválido."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Obtener el usuario asociado al token de sesión corto
-    user_id = access_token['user_id']
-    user = User.objects.filter(id=user_id).first()
-    if not user:
-        return Response({"error": "Usuario no encontrado para este token de sesión corto."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Invalidar el token de sesión largo asociado al usuario
-    user.long_session_token = None
-    user.save()
-
-    # Devolver éxito
-    return Response({"message": "Huella digital borrada exitosamente."}, status=status.HTTP_200_OK)
-# Vista para obtener la lista de artículos
 @api_view(['GET'])
 def get_articles(request):
     try:
@@ -154,7 +119,7 @@ def get_articles(request):
 
         if user:
             # Hacer la solicitud GET al servicio de lista de artículos
-            response = requests.get('https://api.npoint.io/9d122573b46e2ac7a185')
+            response = requests.get('https://api.npoint.io/237a0d1ac8530064cc04')
             
             if response.status_code == 200:
                 articles = response.json()
@@ -168,6 +133,7 @@ def get_articles(request):
     
 @api_view(['GET'])
 def get_offers(request):
+    
     try:
         # Verificar la autenticación del token de acceso
         jwt_authentication = JWTAuthentication()
@@ -175,7 +141,7 @@ def get_offers(request):
 
         if user:
             # Hacer la solicitud GET al servicio de lista de artículos
-            response = requests.get('https://api.npoint.io/9d122573b46e2ac7a185')
+            response = requests.get('https://api.npoint.io/237a0d1ac8530064cc04')
             
             if response.status_code == 200:
                 articles = response.json()
@@ -188,6 +154,27 @@ def get_offers(request):
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 @api_view(['POST'])
-def logout_user(request):
-    logout(request)
-    return Response({"message": "Sesión cerrada exitosamente."})
+def logout(request):
+    # Obtiene el token de acceso del encabezado de autorización
+    authorization_header = request.headers.get('Authorization')
+    if not authorization_header:
+        return Response({"error": "El encabezado de autorización no está presente."}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        # Extrae el token de acceso del encabezado
+        access_token = authorization_header.split(' ')[1]
+
+        # Verifica si el token de acceso es válido
+        AccessToken(access_token)
+
+        # Si el token es válido, lo invalida (borrándolo)
+        # Aquí podrías agregar más acciones como registrar la acción de logout, etc.
+        # Por ahora, simplemente devuelve un mensaje de éxito
+        return Response({"message": "Cierre de sesión exitoso."}, status=status.HTTP_200_OK)
+
+    except AuthenticationFailed:
+        # Si el token de acceso no es válido, devuelve un error
+        return Response({"error": "Token de acceso inválido."}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        # Si ocurre un error inesperado, devuelve un mensaje de error genérico
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
